@@ -24,7 +24,7 @@ class CSVData:
         return f'Id:{self.id},Subreddit:{self.subreddit},Title:{self.title},Selftext:{self.selftext},Num Comments:{self.num_comments},Permalink:{self.permalink}'
 
 def load_data():
-    return {subreddit : [CSVData(line) for line in csv.reader(open('../data/csv' + subreddit + '.csv','r',newline=''))] for subreddit in subreddits}
+    return {subreddit : [CSVData(line) for line in csv.reader(open('../data/csv/' + subreddit + '.csv','r',newline=''))] for subreddit in subreddits}
 
 def unigrams(line,pos_tags=False):
     if pos_tags:
