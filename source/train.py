@@ -28,7 +28,7 @@ from sklearn.svm import LinearSVC
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier , GradientBoostingClassifier , StackingClassifier , VotingClassifier
 
-def train(data_path : str, num_ex : int, classifier : str, alpha : float):
+def train(data_path : str, num_ex : int, classifier : str, alpha : float, ngrams : tuple):
 
   # Loading data from pickle file
   infile = open(data_path,'rb')
@@ -80,7 +80,7 @@ def train(data_path : str, num_ex : int, classifier : str, alpha : float):
   list_of_reviews = list(train_data['comments'])
 
   # tfidf vectorization
-  vect = TfidfVectorizer()
+  vect = TfidfVectorizer(ngram_range=ngrams)
 
   # Creating bag of words with features (unigram/ bigram/ .. ngrams)
   data = pd.DataFrame(vect.fit_transform(list_of_reviews).toarray(), index=list_of_reviews, columns= vect.get_feature_names()) # Creating bag of words with unigram features
@@ -114,17 +114,17 @@ def train(data_path : str, num_ex : int, classifier : str, alpha : float):
     clf = AdaBoostClassifier(n_estimators=100)
   elif classifier == 'GRADB': # Gradient boosting
     clf = GradientBoostingClassifier(n_estimators=50)
-  elif classifier == 'BAG': # Bagging with MultinomialNB
+  elif classifier == 'BAG': # Bagging with LinearSVC
     clf = BaggingClassifier(base_estimator=LinearSVC(random_state=127), n_estimators=100, random_state=127)
 
 
   # Ensemble
   if classifier == 'STACK':
     estimators = [('lr', LogisticRegression()) , ('svc', LinearSVC(random_state=127))]
-    clf = StackingClassifier(estimators=estimators, final_estimator=LogisticRegression(random_state=127))
+    clf = StackingClassifier(estimators=estimators, final_estimator=LinearSVC(random_state=127))
 
   if classifier == 'VOTE':
-    clf = VotingClassifier(estimators=[('lr', LogisticRegression(random_state=127)), ('svc', SVC(kernel='linear',random_state=127))],voting='soft')
+    clf = VotingClassifier(estimators=[('lr', LogisticRegression(random_state=127)), ('svc', SVC(kernel='linear',random_state=127,probability=True))],voting='soft')
 
   # Training
   print('Training..')
@@ -138,11 +138,23 @@ def train(data_path : str, num_ex : int, classifier : str, alpha : float):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--data_path', type=str, default='/content/gdrive/MyDrive/NLP_project/trainset', help='Data path')
-  parser.add_argument('--num_ex', type=int, default=1000, help='Number of examples')
+  parser.add_argument('--num_ex', type=int, default=1000, help='Number of examples per each class(subreddit)')
   parser.add_argument('--classifier', type=str, default='SVC', help='Classifier')
   parser.add_argument('--alpha', type=float, default=1, help='Smoothing parameter for Multinomial Naive Bayes')
+  parser.add_argument('--ngrams', type=int, nargs="+", help='ngrams to be extracted')
   args = parser.parse_args()
-  train(args.data_path, args.num_ex, args.classifier, args.alpha)
+  if args.ngrams is None:
+    args.ngrams = (1, 1)
+  else:
+    args.ngrams = tuple(args.ngrams)
+  print("ngrams:", args.ngrams)
+  train(args.data_path, args.num_ex, args.classifier, args.alpha, args.ngrams)
+
+  # To select ngrams parameter run this way
+
+  # !python train.py --data_path '/content/gdrive/MyDrive/NLP_project/trainset' --ngrams 1 1 --num_ex 1000
+
+  # 1 1 extracts only unigrams, 1 2 extracts uni+bigrams, 2 2 extracts only bigrams and so on
 
 
 
