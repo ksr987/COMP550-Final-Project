@@ -1,0 +1,4 @@
+Building trainset..
+MNB
+Training..
+Accuracy of MNB is 74.86

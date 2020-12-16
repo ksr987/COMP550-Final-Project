@@ -1,0 +1,4 @@
+Building trainset..
+LR
+Training..
+Accuracy of LR is 84.26

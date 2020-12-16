@@ -1,0 +1,4 @@
+Building trainset..
+SVC
+Training..
+Accuracy of SVC is 83.46000000000001
