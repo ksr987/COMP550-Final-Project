@@ -18,6 +18,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 # from sklearn.model_selection import cross_val_score, KFold
 # from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.naive_bayes import ComplementNB
@@ -89,7 +90,7 @@ def train(data_path : str, num_ex : int, classifier : str, alpha : float, ngrams
   data['label_or_Class'] = train_data['title']
 
   # Shuffling
-  data = data.sample(frac=1)
+  data = data.sample(frac=1, random_state=27)
   X = data.iloc[:,:-1] # X - bag of words (input)
   y = data.iloc[:,-1]  # y - labels
 
@@ -132,8 +133,13 @@ def train(data_path : str, num_ex : int, classifier : str, alpha : float, ngrams
 
   # Training
     print('Training..')
-    acc_score = clf.fit(X_train,y_train).score(X_val, y_val)
-    print(f'Accuracy of {classifier} is', acc_score*100)
+    clf.fit(X_train,y_train)
+    pred_test = clf.predict(X_val)
+    acc_score = accuracy_score(y_val, pred_test)
+    pred_train = clf.predict(X_train)
+    train_score = accuracy_score(y_train, pred_train)
+    print(f'Train Accuracy of {classifier} is', train_score*100)
+    print(f'Test Accuracy of {classifier} is', acc_score*100)
 
 
 
