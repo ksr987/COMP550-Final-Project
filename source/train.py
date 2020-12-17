@@ -28,7 +28,7 @@ from sklearn.svm import LinearSVC
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier , GradientBoostingClassifier , StackingClassifier , VotingClassifier
 
-def train(data_path : str, num_ex : int, classifier : str, alpha : float, ngrams : tuple):
+def train(data_path : str, num_ex : int, classifier : str, alpha : float, ngrams : tuple, preset : bool):
 
   # Loading data from pickle file
   infile = open(data_path,'rb')
@@ -97,39 +97,43 @@ def train(data_path : str, num_ex : int, classifier : str, alpha : float, ngrams
   X_train, X_val, y_train, y_val = train_test_split(X, y, test_size = 0.1, random_state=127)
 
   # Selecting classifier
-  print(classifier)
-  if classifier == 'MNB': # Multinomial Naive bayes
-    clf = MultinomialNB(alpha=alpha)
-  elif classifier == 'SVC': # Linear SVM
-    clf = LinearSVC(random_state=127)
-  elif classifier == 'LR': # Logistic regression
-    clf = LogisticRegression()
-  elif classifier == 'Random': # Random
-    clf =DummyClassifier(strategy='uniform',random_state=100)
-  elif classifier == 'GNB': # Gaussian naive bayes
-    clf = GaussianNB()
-  elif classifier == 'CNB': # Complement naive bayes
-    clf = ComplementNB()
-  elif classifier == 'ADAB': # Adaboost
-    clf = AdaBoostClassifier(n_estimators=100)
-  elif classifier == 'GRADB': # Gradient boosting
-    clf = GradientBoostingClassifier(n_estimators=50)
-  elif classifier == 'BAG': # Bagging with LinearSVC
-    clf = BaggingClassifier(base_estimator=LinearSVC(random_state=127), n_estimators=100, random_state=127)
+
+  preset_list = ['MNB','SVC','Random', 'CNB', 'BAG', 'STACK', 'VOTE', 'LR', 'GRADB'] if preset else [classifier]
+  
+  for classifier in preset_list:
+    print(classifier)
+    if classifier == 'MNB': # Multinomial Naive bayes
+      clf = MultinomialNB(alpha=alpha)
+    elif classifier == 'SVC': # Linear SVM
+      clf = LinearSVC(random_state=127)
+    elif classifier == 'LR': # Logistic regression
+      clf = LogisticRegression()
+    elif classifier == 'Random': # Random
+      clf =DummyClassifier(strategy='uniform',random_state=100)
+    elif classifier == 'GNB': # Gaussian naive bayes
+      clf = GaussianNB()
+    elif classifier == 'CNB': # Complement naive bayes
+      clf = ComplementNB()
+    elif classifier == 'ADAB': # Adaboost
+      clf = AdaBoostClassifier(n_estimators=100)
+    elif classifier == 'GRADB': # Gradient boosting
+      clf = GradientBoostingClassifier(n_estimators=50)
+    elif classifier == 'BAG': # Bagging with LinearSVC
+      clf = BaggingClassifier(base_estimator=LinearSVC(random_state=127), n_estimators=100, random_state=127)
 
 
-  # Ensemble
-  if classifier == 'STACK':
-    estimators = [('lr', LogisticRegression()) , ('svc', LinearSVC(random_state=127))]
-    clf = StackingClassifier(estimators=estimators, final_estimator=LinearSVC(random_state=127))
+    # Ensemble
+    if classifier == 'STACK':
+      estimators = [('lr', LogisticRegression()) , ('svc', LinearSVC(random_state=127))]
+      clf = StackingClassifier(estimators=estimators, final_estimator=LinearSVC(random_state=127))
 
-  if classifier == 'VOTE':
-    clf = VotingClassifier(estimators=[('lr', LogisticRegression(random_state=127)), ('svc', SVC(kernel='linear',random_state=127,probability=True))],voting='soft')
+    if classifier == 'VOTE':
+      clf = VotingClassifier(estimators=[('lr', LogisticRegression(random_state=127)), ('svc', SVC(kernel='linear',random_state=127,probability=True))],voting='soft')
 
   # Training
-  print('Training..')
-  acc_score = clf.fit(X_train,y_train).score(X_val, y_val)
-  print(f'Accuracy of {classifier} is', acc_score*100)
+    print('Training..')
+    acc_score = clf.fit(X_train,y_train).score(X_val, y_val)
+    print(f'Accuracy of {classifier} is', acc_score*100)
 
 
 
@@ -138,17 +142,18 @@ def train(data_path : str, num_ex : int, classifier : str, alpha : float, ngrams
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--data_path', type=str, default='/content/gdrive/MyDrive/NLP_project/trainset', help='Data path')
-  parser.add_argument('--num_ex', type=int, default=1000, help='Number of examples per each class(subreddit)')
-  parser.add_argument('--classifier', type=str, default='SVC', help='Classifier')
-  parser.add_argument('--alpha', type=float, default=1, help='Smoothing parameter for Multinomial Naive Bayes')
-  parser.add_argument('--ngrams', type=int, nargs="+", help='ngrams to be extracted')
+  parser.add_argument('--num_ex', type=int, default=1000, help='Number of examples per each class(subreddit), defeault=1000')
+  parser.add_argument('--classifier', type=str, default='SVC', help='Classifier, defeault=SVC')
+  parser.add_argument('--alpha', type=float, default=1, help='Smoothing parameter for Multinomial Naive Bayes, default=1')
+  parser.add_argument('--ngrams', type=int, nargs="+", help='ngrams to be extracted, default=(1,1)')
+  parser.add_argument('--preset', help='Use flag to run a pre-defined list of classifiers instead of the single classifier specified by --classifier', action='store_true')
   args = parser.parse_args()
   if args.ngrams is None:
     args.ngrams = (1, 1)
   else:
     args.ngrams = tuple(args.ngrams)
   print("ngrams:", args.ngrams)
-  train(args.data_path, args.num_ex, args.classifier, args.alpha, args.ngrams)
+  train(args.data_path, args.num_ex, args.classifier, args.alpha, args.ngrams, args.preset)
 
   # To select ngrams parameter run this way
 
